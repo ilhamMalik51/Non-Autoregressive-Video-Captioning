@@ -35,6 +35,7 @@ def main(args):
         word_count_threshold[args.dataset],
         sort_vocab=args.sort_vocab,
         )
+        
     itow, captions, itop, pos_tags = utils_corpora.get_captions_and_pos_tags(raw_caps_all, vocab)
 
     length_info = utils_corpora.get_length_info(captions)
