@@ -17,8 +17,8 @@ mapping = {
     'length': ('pred_length', 'tgt_length'),
 }
 
-base_checkpoint_path = 'experiments'	# base path to save checkpoints
-base_data_path = 'D:\\GitHub\\SKRIPSI\\Non-Autoregressive-Video-Captioning' # base path to load corpora and features
+base_checkpoint_path = '/experiments'	# base path to save checkpoints
+base_data_path = '/content/Non-Autoregressive-Video-Captioning' # base path to load corpora and features
 
 # mapping of nltk pos tags
 pos_tag_mapping = {}

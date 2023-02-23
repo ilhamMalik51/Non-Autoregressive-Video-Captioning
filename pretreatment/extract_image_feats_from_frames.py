@@ -27,7 +27,7 @@ def extract_feats(params, model, load_image_fn, C, H, W):
         video_id = frames_dst.split('/')[-1]
 
         # Ditambah 2 karena ada 2 string tambahan
-        if int(video_id[11:]) > 10000: 
+        if int(video_id[5:]) > 10000: 
             # MSR-VTT 2017 has 13,000 videos, but we use MSR-VTT 2016 like previous works
             # So we only need to process video0 ~ video9999
             continue
@@ -50,10 +50,11 @@ def extract_feats(params, model, load_image_fn, C, H, W):
             for i, image_path in enumerate(image_list):
                 images[i] = load_image_fn(image_path)
 
-        # with torch.no_grad():
-        #     feats = model(images.cuda())
         with torch.no_grad():
-            feats = model(images)
+            feats = model(images.cuda())
+        
+        # with torch.no_grad():
+        #     feats = model(images)
             
         feats = feats.squeeze().cpu().numpy()
 
@@ -106,13 +107,13 @@ if __name__ == '__main__':
     elif params['model'] == 'inceptionresnetv2':
         C, H, W = 3, 299, 299
         model = pretrainedmodels.inceptionresnetv2(
-            num_classes=1001, pretrained='imagenet+background')
+            num_classes=1000, pretrained='imagenet')
     else:
         print("doesn't support %s" % (params['model']))
 
     load_image_fn = utils.LoadTransformImage(model)
     model.last_linear = utils.Identity()
 
-    # model = model.cuda()
+    model = model.cuda()
     # summary(model, (C, H, W))
     extract_feats(params, model, load_image_fn, C, H, W)

@@ -1,5 +1,13 @@
+// EXTRACT FRAMES COMMAND
 python pretreatment/extract_frames_from_videos.py --video_path MSRVTT/raw-data/train/ --frame_path MSRVTT/feats --video_suffix mp4 --frame_suffix jpg --strategy 1 --fps 5 --vframes 60
 
 python pretreatment/extract_frames_from_videos.py --video_path MSRVTT/raw-data/train/ --frame_path MSRVTT/vtf_all --video_suffix mp4 --frame_suffix jpg --strategy 0
 
+
+// EXTRACT FRAMES FEATURES
 python pretreatment/extract_image_feats_from_frames.py --frame_path MSRVTT/vtf/train/ --feat_path MSRVTT/feats --feat_name image_resnet101_imagenet_fps_max60_100.hdf5 --model resnet101 --k 0 --frame_suffix jpg
+
+// EXTRACK FRAMES MOTIONS
+python main.py --gpu 0 --model resnext-101-kinetics.pth --video_root MSRVTT/vtf_all/train/ --feats_dir MSRVTT/feats/
+
+python /content/Non-Autoregressive-Video-Captioning/video-classification-3d-cnn/main.py --gpu 0 --model /content/drive/MyDrive/resnext-101-kinetics.pth --video_root /content/Non-Autoregressive-Video-Captioning/MSRVTT/vtf_all --feats_dir /content/Non-Autoregressive-Video-Captioning/MSRVTT/feats
