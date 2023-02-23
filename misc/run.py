@@ -276,7 +276,7 @@ def train_network_all(opt, model, device, **kwargs):
             model=model, 
             checkpoint_path=opt['teacher_path'],
             str_mapping={'decoder.bert.': 'decoder.'}
-        )
+        ) 
     
     model.to(device)
     summarywriter = SummaryWriter(os.path.join(opt['checkpoint_path'], 'trainval'))
