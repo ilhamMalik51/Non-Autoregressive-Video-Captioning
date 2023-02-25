@@ -65,7 +65,7 @@ if __name__=="__main__":
     parser.add_argument("--info_path", type=str, default='', help='mapping the video name to the video_id')
     parser.add_argument("--strategy", type=int, default=0, help='0: extract all the frames; 1: need to specify fps and vframes')
     parser.add_argument("--fps", type=str, default='5', help='the number of frames you want to extract within 1 second')
-    parser.add_argument("--vframes", type=str, default='60', help='the maximun number of frames you want to extract')
+    parser.add_argument("--vframes", type=str, default='60', help='the maximum number of frames you want to extract')
 
     parser.add_argument("--video_suffix", type=str, default='mp4')
     parser.add_argument("--frame_suffix", type=str, default='jpg')

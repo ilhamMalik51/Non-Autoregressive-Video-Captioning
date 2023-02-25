@@ -123,6 +123,7 @@ class Beam():
         #pelnety
         for item in self.finished:
             item[0] /= item[1]**alpha
+            
         self.finished.sort(key=lambda a: -a[0])
         scores = [sc for sc, _, _ in self.finished]
         tk = [(t, k) for _, t, k in self.finished]

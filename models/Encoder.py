@@ -11,8 +11,10 @@ class HighWay(nn.Module):
         super(HighWay, self).__init__()
         self.with_gate = with_gate
         self.w1 = nn.Linear(hidden_size, hidden_size)
+
         if self.with_gate:
             self.w2 = nn.Linear(hidden_size, hidden_size)
+            
         self.tanh = nn.Tanh()
         #self._init_weights()
 

@@ -321,6 +321,7 @@ def train_network_all(opt, model, device, **kwargs):
 
         logger.write_text("epoch %d lr=%g (ss_prob=%g)" % (epoch, optimizer.get_lr(), opt.get('teacher_prob', 1)))
         # training
+        
         train_loss = run_train(opt, model, crit, optimizer, train_loader, device, logger=logger, epoch=epoch)
 
         optimizer.epoch_update_learning_rate()

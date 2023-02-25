@@ -77,7 +77,8 @@ def main(opt):
     with open(opt_json, 'w') as f:
         json.dump(opt, f)
     print('save opt details to %s' % (opt_json))
-
+    
+    # get the model
     model = get_model(opt)
     print_information(opt, model)
     device = torch.device('cuda' if not opt['no_cuda'] else 'cpu')
