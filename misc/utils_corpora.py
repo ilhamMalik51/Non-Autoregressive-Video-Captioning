@@ -97,6 +97,7 @@ def preprocess_Youtube2Text(base_path):
     raw_caps_train = {}
     
     refs = pickle.load(open(refs_pickle, 'rb'))
+    
     for vid in tqdm(refs.keys()):
         num = int(vid[5:]) # e.g. 'video999', num = 999
         for item in refs[vid]:

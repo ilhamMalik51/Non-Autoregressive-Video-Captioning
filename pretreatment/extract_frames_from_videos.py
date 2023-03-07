@@ -81,6 +81,7 @@ if __name__=="__main__":
         print_info = 'all frames from a video'
     else:
         print_info = 'fps=%s, vframes=%s' % (params['fps'], params['vframes'])
+        
     tqdm.write('Extraction strategy: %s' % print_info)
 
     run(params)

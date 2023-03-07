@@ -26,7 +26,6 @@ def extract_feats(params, model, load_image_fn, C, H, W):
     for frames_dst in tqdm(frames_path_list):
         video_id = frames_dst.split('/')[-1]
 
-        # Ditambah 2 karena ada 2 string tambahan
         if int(video_id[5:]) > 10000: 
             # MSR-VTT 2017 has 13,000 videos, but we use MSR-VTT 2016 like previous works
             # So we only need to process video0 ~ video9999
@@ -38,13 +37,17 @@ def extract_feats(params, model, load_image_fn, C, H, W):
 
         if params['k']: 
             images = torch.zeros((params['k'], C, H, W))
+
             bound = [int(i) for i in np.linspace(0, len(image_list), params['k']+1)]
+
             for i in range(params['k']):
                 idx = (bound[i] + bound[i+1]) // 2
+                
                 if params['model'] == 'googlenet':
                     images[i] = load_image_fn.get(image_list[idx])
                 else:
                     images[i] = load_image_fn(image_list[idx])
+                    
         else:
             images = torch.zeros((len(image_list), C, H, W))
             for i, image_path in enumerate(image_list):

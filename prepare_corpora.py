@@ -30,7 +30,7 @@ def main(args):
     split_category = results.get('split_category', None)
     
     # create the vocab
-    vocab = utils_corpora.build_vocab(
+    vocab = utils_corpora.build_vocab( 
         raw_caps_train, 
         word_count_threshold[args.dataset],
         sort_vocab=args.sort_vocab,

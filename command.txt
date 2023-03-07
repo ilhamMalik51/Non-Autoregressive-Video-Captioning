@@ -13,4 +13,4 @@ python main.py --gpu 0 --model resnext-101-kinetics.pth --video_root MSRVTT/vtf_
 python /content/Non-Autoregressive-Video-Captioning/video-classification-3d-cnn/main.py --gpu 0 --model /content/drive/MyDrive/resnext-101-kinetics.pth --video_root /content/Non-Autoregressive-Video-Captioning/MSRVTT/vtf_all --feats_dir /content/Non-Autoregressive-Video-Captioning/MSRVTT/feats
 
 // TRAIN
-python train.py --default --dataset MSRVTT --method ARB
+python train.py --default --dataset MSRVTT --method ARB 
