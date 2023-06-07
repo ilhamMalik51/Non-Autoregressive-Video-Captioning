@@ -60,9 +60,34 @@ class Seq2Seq(nn.Module):
 
         results['enc_output'] = enc_output # ini tuh udah tensor yang disimpan di dict
         results['enc_hidden'] = enc_hidden # ini juga udah tensor
-        results['enc_obj_output'] = enc_obj_output
-            
+        results['enc_obj_output'] = enc_obj_output          
         return results
+
+    def align_object_variable(self, r_feats, r_hat):
+        '''
+        align object modul according to ORG-TRL Paper
+        refers = https://openaccess.thecvf.com/content_CVPR_2020/papers/Zhang_Object_Relational_Graph_With_Teacher-Recommended_Learning_for_Video_Captioning_CVPR_2020_paper.pdf
+        args:
+        object_variable : This is object features exctracted from Faster RCNN
+        output:
+        aligned_object_variable
+        '''
+        ## Mengambil anchor frame sebagai acuan untuk setiap objek
+        ## Memisahkan anchor frame dari keseluruhan fitur objek
+        anchor_frame = r_feats[:, 0]
+        next_frame = r_feats[:, 1:r_feats.size(1)]
+        
+        ## menghitung cosine similarity scores
+        ## matmul( achor_frame, next_frame ) / | anchor_frame | * | next_frame |
+        similarity_score = (torch.matmul(anchor_frame.unsqueeze(1), next_frame.transpose(2, -1)) / \
+                            (torch.norm(anchor_frame.unsqueeze(1), dim=-1)[:, :, :, None] * \
+                            torch.norm(next_frame, dim=-1)[:, :, None, :]))
+
+        aligned_frames = torch.gather(r_hat[:, 1:r_hat.size(1)], 
+                                      dim=2, 
+                                      index=similarity_score.topk(1, -1)[1].\
+                                      expand(-1, -1, -1, r_hat.size(-1)))
+        return torch.cat([r_hat[:, 0].unsqueeze(1), aligned_frames], dim=1)
     
     def prepare_inputs_for_decoder(self, encoder_outputs, category):
         input_keys_for_decoder = ['enc_output']
@@ -79,6 +104,11 @@ class Seq2Seq(nn.Module):
         if isinstance(inputs_for_decoder['enc_output'], list):
             assert len(inputs_for_decoder['enc_output']) == 1
             inputs_for_decoder['enc_output'] = inputs_for_decoder['enc_output'][0]
+        
+        if isinstance(inputs_for_decoder['enc_obj_output'], tuple):
+            assert len(inputs_for_decoder['enc_obj_output']) == 2 # memeriksa objek fitur
+            inputs_for_decoder['enc_obj_output'] = self.align_object_variable(inputs_for_decoder['enc_obj_output'][0],
+                                                                              inputs_for_decoder['enc_obj_output'][1])
 
         return inputs_for_decoder
 

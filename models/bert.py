@@ -253,11 +253,13 @@ class BertLayer(nn.Module):
             else BertAttention(config, pos=True)
         self.attend_to_enc_output = None if not is_decoder_layer \
             else BertAttention(config, attend_to_enc_output=True)
+        self.attend_to_enc_obj_output = None if not is_decoder_layer \
+            else BertAttention(config, attend_to_enc_output=True)
         self.intermediate = BertIntermediate(config)
         self.output = BertOutput(config)
 
     def forward(self, hidden_states, non_pad_mask=None, attention_mask=None, 
-        enc_output=None, attend_to_enc_output_mask=None,
+        enc_output=None, attend_to_enc_output_mask=None, enc_obj_output=None,
         attr_probs=None, attend_to_attributes_mask=None, video2attr_raw_scores=None, word_embeddings=None,
         output_attentions=False, head_mask=None, position_embeddings=None, **kwargs):
         

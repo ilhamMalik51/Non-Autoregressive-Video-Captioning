@@ -93,13 +93,17 @@ class BertDecoder(nn.Module):
     def set_word_embeddings(self, we):
         self.embedding.word_embeddings = we
 
-    def forward(self, tgt_seq, enc_output=None, category=None, signals=None, tags=None, **kwargs):
+    def forward(self, tgt_seq, enc_output=None, category=None, signals=None, tags=None, enc_obj_output=None,**kwargs):
         decoding_type = kwargs.get('decoding_type', self.decoding_type)
         output_attentions = kwargs.get('output_attentions', False)
 
         if isinstance(enc_output, list):
             assert len(enc_output) == 1
             enc_output = enc_output[0]
+
+        if isinstance(enc_obj_output, tuple): # menambah fitur ORG
+            assert len(enc_output) == 2
+            enc_obj_output = enc_obj_output[1]
         all_attentions = ()
 
         slf_attn_mask_keypad = get_attn_key_pad_mask(seq_k=tgt_seq, seq_q=tgt_seq)
