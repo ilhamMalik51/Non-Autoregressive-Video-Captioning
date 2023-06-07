@@ -18,9 +18,7 @@ def swish(x):
 
 ACT2FN = {"gelu": gelu, "relu": torch.nn.functional.relu, "swish": swish, "gelu_new": gelu_new}
 
-
 BertLayerNorm = torch.nn.LayerNorm
-
 
 class PositionalEmbedding(nn.Module):
     def __init__(self, max_len, d_model):
@@ -44,7 +42,8 @@ class PositionalEmbedding(nn.Module):
 
 
 class BertEmbeddings(nn.Module):
-    """Construct the embeddings from word, position and token_type embeddings.
+    """
+    Construct the embeddings from word, position and token_type embeddings.
     """
     def __init__(self, config, return_pos=False):
         super(BertEmbeddings, self).__init__()
@@ -54,21 +53,20 @@ class BertEmbeddings(nn.Module):
         else:
             self.word_embeddings = nn.Embedding(config.vocab_size, config.dim_hidden, padding_idx=Constants.PAD)
 
-
-        self.position_embeddings = nn.Embedding(config.max_len, config.dim_hidden)
-        self.category_embeddings = nn.Embedding(config.num_category, config.dim_hidden) if config.with_category else None
-        self.return_pos = return_pos
+        self.position_embeddings = nn.Embedding(config.max_len, config.dim_hidden) # position embedding default to transformers
+        self.category_embeddings = nn.Embedding(config.num_category, config.dim_hidden) if config.with_category else None # true for MSRVTT
+        self.return_pos = return_pos # False default
 
         self.LayerNorm = BertLayerNorm(config.dim_hidden, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         if self.return_pos:
-            self.pos_LN = BertLayerNorm(config.dim_hidden, eps=config.layer_norm_eps)
-            self.pos_dropout = nn.Dropout(config.hidden_dropout_prob)
+            self.pos_LN = BertLayerNorm(config.dim_hidden, eps=config.layer_norm_eps) # 0.00001
+            self.pos_dropout = nn.Dropout(config.hidden_dropout_prob) # dropout rate 0.5
 
         self.tag2hidden = None
 
     def forward(self, input_ids, category=None, position_ids=None, additional_feats=None, tags=None):
-        seq_length = input_ids.size(1)
+        seq_length = input_ids.size(1) # ngeget panjang sequence
         if position_ids is None:
             position_ids = torch.arange(seq_length, dtype=torch.long, device=input_ids.device)
             position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
@@ -76,24 +74,23 @@ class BertEmbeddings(nn.Module):
         words_embeddings = self.word_embeddings(input_ids)
         if getattr(self, 'word_embeddings_prj', None) is not None:
             words_embeddings = self.word_embeddings_prj(words_embeddings)
-
-        #words_embeddings = self.prj(self.word_embeddings(input_ids))
+            
         position_embeddings = self.position_embeddings(position_ids)
         if self.category_embeddings is not None:
             assert category is not None
             category_embeddings = self.category_embeddings(category).repeat(1, words_embeddings.size(1), 1)
 
         if not self.return_pos:
-            embeddings = words_embeddings + position_embeddings
+            embeddings = words_embeddings + position_embeddings # addition operation
             if self.category_embeddings is not None:
-                embeddings = embeddings + category_embeddings
+                embeddings = embeddings + category_embeddings # addition again
             
-            if additional_feats is not None:
+            if additional_feats is not None: # SKIP
                 embeddings = embeddings + additional_feats
 
             embeddings = self.LayerNorm(embeddings)
             embeddings = self.dropout(embeddings)
-            return embeddings
+            return embeddings # final results
         else:
             embeddings = words_embeddings + position_embeddings
             if self.category_embeddings is not None:
@@ -121,10 +118,10 @@ class BertSelfAttention(nn.Module):
                 "heads (%d)" % (config.dim_hidden, config.num_attention_heads))
 
         self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = int(config.dim_hidden / config.num_attention_heads)
+        self.attention_head_size = int(config.dim_hidden / config.num_attention_heads) # 512 dim_hidden / 8 attn_heads = 64 head_size
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
-        self.query = nn.Linear(config.dim_hidden, self.all_head_size)
+        self.query = nn.Linear(config.dim_hidden, self.all_head_size) # query is for decoder if it is an inter-attention modul
         if attend_to_enc_output and getattr(config, 'modality_wise_dimensions', False):
             self.key = nn.Linear(config.dim_hidden * len(config.modality), self.all_head_size)
             self.value = nn.Linear(config.dim_hidden * len(config.modality), self.all_head_size)
@@ -143,7 +140,7 @@ class BertSelfAttention(nn.Module):
         sz_b, len_k, _ = k.size()
         sz_b, len_v, _ = v.size()
 
-        q = self.query(q).view(sz_b, len_q, n_head, d_k)
+        q = self.query(q).view(sz_b, len_q, n_head, d_k) # [ :, :, 8, 64] shape of tensors
         k = self.key(k).view(sz_b, len_k, n_head, d_k)
         v = self.value(v).view(sz_b, len_v, n_head, d_v)
 
@@ -218,9 +215,9 @@ class BertAttention(nn.Module):
 class BertIntermediate(nn.Module):
     def __init__(self, config):
         super(BertIntermediate, self).__init__()
-        self.dense = nn.Linear(config.dim_hidden, config.intermediate_size)
+        self.dense = nn.Linear(config.dim_hidden, config.intermediate_size) # intermediate size is 4x the dim_hidden
         if isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)):
-            self.intermediate_act_fn = ACT2FN[config.hidden_act]
+            self.intermediate_act_fn = ACT2FN[config.hidden_act] # gelu_new
         else:
             self.intermediate_act_fn = config.hidden_act
 
@@ -233,14 +230,14 @@ class BertIntermediate(nn.Module):
 class BertOutput(nn.Module):
     def __init__(self, config):
         super(BertOutput, self).__init__()
-        self.dense = nn.Linear(config.intermediate_size, config.dim_hidden)
+        self.dense = nn.Linear(config.intermediate_size, config.dim_hidden) # Intermediate 2048 -> 512
         self.LayerNorm = BertLayerNorm(config.dim_hidden, eps=config.layer_norm_eps) if config.with_layernorm else None
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states, input_tensor):
         hidden_states = self.dense(hidden_states)
         hidden_states = self.dropout(hidden_states)
-        hidden_states = hidden_states + input_tensor
+        hidden_states = hidden_states + input_tensor # residual connection
         if self.LayerNorm is not None:
             hidden_states = self.LayerNorm(hidden_states)
 
@@ -263,9 +260,11 @@ class BertLayer(nn.Module):
         enc_output=None, attend_to_enc_output_mask=None,
         attr_probs=None, attend_to_attributes_mask=None, video2attr_raw_scores=None, word_embeddings=None,
         output_attentions=False, head_mask=None, position_embeddings=None, **kwargs):
+        
         all_attentions = ()
+        # output ini memiliki shape [BATCH_SIZE, SEQ_LENGTH, FEAT_DIM]
         attention_outputs = self.attention(hidden_states, hidden_states, hidden_states, attention_mask, head_mask, output_attentions=output_attentions)
-        attention_output = attention_outputs[0]
+        attention_output = attention_outputs[0] # karena outputnya tuple
         all_attentions += attention_outputs[1:]
 
         if non_pad_mask is not None:
@@ -279,22 +278,24 @@ class BertLayer(nn.Module):
             if non_pad_mask is not None:
                 attention_output = attention_output * non_pad_mask
 
-        if self.attend_to_enc_output is not None:
+        if self.attend_to_enc_output is not None: # ini Inter-Attention Encoder-Decoder
             assert attend_to_enc_output_mask is not None
             assert enc_output is not None
 
-            attention_outputs = self.attend_to_enc_output(
+            attention_outputs = self.attend_to_enc_output( 
                 attention_output, enc_output, enc_output, 
                 attend_to_enc_output_mask, head_mask, 
                 output_attentions=output_attentions
             )
-            attention_output = attention_outputs[0]
+            # output ini memiliki shape [BATCH_SIZE, SEQ_LENGTH, FEAT_DIM]
+
+            attention_output = attention_outputs[0] # karena outputnya tuple
             all_attentions += attention_outputs[1:]
             if non_pad_mask is not None:
                 attention_output = attention_output * non_pad_mask
 
-        intermediate_output = self.intermediate(attention_output)
-        layer_output = self.output(intermediate_output, attention_output)
+        intermediate_output = self.intermediate(attention_output) # ini memiliki shape [BATCH_SIZE, SEQ_LENGTH, 2048]
+        layer_output = self.output(intermediate_output, attention_output) # ini memiliki shape [BATCH_SIZE, SEQ_LENGTH, 512]
         if non_pad_mask is not None:
             layer_output *= non_pad_mask
 

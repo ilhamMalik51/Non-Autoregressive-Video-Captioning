@@ -37,7 +37,7 @@ def prepare_data(data, key, device):
     return data[key].to(device)
 
 
-def get_forword_results(opt, model, data, device, only_data=False, vocab=None, **kwargs):
+def get_forward_results(opt, model, data, device, only_data=False, vocab=None, **kwargs):
     category, labels = map(
             lambda x: x.to(device), 
             [data['category'], data['labels']]
@@ -56,9 +56,9 @@ def get_forword_results(opt, model, data, device, only_data=False, vocab=None, *
 
     if only_data:
         # for evaluation
-        results = model.encode(feats=feats)
+        results = model.encode(feats=feats) 
     else:
-        results = model(
+        results = model( # forward pass
             feats=feats,
             tgt_tokens=tokens, 
             category=category,
@@ -87,8 +87,9 @@ def get_forword_results(opt, model, data, device, only_data=False, vocab=None, *
 
 
 def get_loader(opt, mode, print_info=False, specific=-1, **kwargs):
-    dataset = VideoDataset(opt, mode, print_info, specific=specific, **kwargs)
+    dataset = VideoDataset(opt, mode, print_info, specific=specific, **kwargs) # ini method sendiri
     batch_size = kwargs.get('batch_size', opt['batch_size'])
+
     return DataLoader(
         dataset, 
         batch_size=batch_size, 
@@ -127,12 +128,12 @@ def run_eval(
 
     for data in tqdm(loader, ncols=150, leave=False):
         with torch.no_grad():
-            encoder_outputs, category, labels = get_forword_results(opt, model, data, device=device, only_data=True, vocab=vocab)
+            encoder_outputs, category, labels = get_forward_results(opt, model, data, device=device, only_data=True, vocab=vocab)
             if crit is not None:
                 _ = crit.get_loss(encoder_outputs)
 
             if teacher_model is not None:
-                teacher_encoder_outputs, *_ = get_forword_results(opt, teacher_model, data, device=device, only_data=True, vocab=vocab)
+                teacher_encoder_outputs, *_ = get_forward_results(opt, teacher_model, data, device=device, only_data=True, vocab=vocab)
             else:
                 teacher_encoder_outputs = None
 
@@ -253,7 +254,7 @@ def run_train(opt, model, crit, optimizer, loader, device, logger=None, epoch=-1
 
     for data in tqdm(loader, ncols=150, leave=False):
         optimizer.zero_grad()
-        results = get_forword_results(opt, model, data, device=device, only_data=False, vocab=vocab, **kwargs)
+        results = get_forward_results(opt, model, data, device=device, only_data=False, vocab=vocab, **kwargs)
         loss = crit.get_loss(results, epoch=epoch)
         loss.backward()
 
@@ -288,21 +289,21 @@ def train_network_all(opt, model, device, **kwargs):
         assert opt.get('teacher_path', None) is not None
         teacher_model, _ = load_model_and_opt(opt['teacher_path'], device)
     else:
-        teacher_model = None
+        teacher_model = None # if ARFormer will go to here
 
     folder_path = os.path.join(opt["checkpoint_path"], 'tmp_models')
-    best_model = k_PriorityQueue(
+    best_model = k_PriorityQueue( # for saving bestModel based on below
         k_best_model = opt.get('k_best_model', 1), 
         folder_path = folder_path,
-        standard = opt.get('standard', ['METEOR', 'CIDEr'])
+        standard = opt.get('standard', ['METEOR', 'CIDEr']) # the standard is B@4, M, C
         )
 
-    train_loader = get_loader(opt, 'train', print_info=False, **kwargs)
+    train_loader = get_loader(opt, 'train', print_info=False, **kwargs) # prepare dataset
     vali_loader = get_loader(opt, 'validate', print_info=False)
     test_loader = get_loader(opt, 'test', print_info=False)
     vocab = vali_loader.dataset.get_vocab()
 
-    logger = CsvLogger(
+    logger = CsvLogger( 
         filepath=opt["checkpoint_path"], 
         filename='trainning_record.csv', 
         fieldsnames=[

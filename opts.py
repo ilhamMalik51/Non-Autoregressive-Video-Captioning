@@ -6,7 +6,7 @@ def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataset', type=str, default='MSRVTT', help='MSRVTT | Youtube2Text')
     parser.add_argument('-m', '--modality', type=str, default='mi')
-    parser.add_argument('-df', '--default', default=False, action='store_true')
+    parser.add_argument('-df', '--default', default=False, action='store_true') # if specified stored as true
     parser.add_argument('--scope', type=str, default='')
     parser.add_argument('-field', '--field', nargs='+', type=str, default=['seed'])
     parser.add_argument('--no_cuda', default=False, action='store_true')
@@ -45,7 +45,7 @@ def parse_opt():
                         help='by default, a BN layer is placed after the encoder outputs of a modality')
     model.add_argument('--norm_type', type=str, default='bn')
     model.add_argument('--dim_word', type=int, default=512, 
-                        help='the embedding size of each token in the vocabulary')
+                        help='the embedding size of each token in the vocabulary') 
     model.add_argument('-tie', '--tie_weights', default=False, action='store_true', 
                         help='share the weights between word embeddings and the projection layer')
 
@@ -114,6 +114,7 @@ def parse_opt():
 
     dataloader = parser.add_argument_group(title='Dataloader Parameters')
     dataloader.add_argument('--n_frames', type=int, default=8, help='the number of frames to represent a whole video')
+    dataloader.add_argument('--n_total_frames', type=int, default=60, help='the number of total frames for a whole video')
     dataloader.add_argument('--n_caps_per_video', type=int, default=0, 
                             help='the number of captions per video to constitute the training set')
     dataloader.add_argument('--random_type', type=str, default='segment_random', 
@@ -128,13 +129,18 @@ def parse_opt():
     dataloader.add_argument('--dim_m', type=int, default=2048, help='feature dimension of the motion modality')
     
     # CHECK
-    dataloader.add_argument('--dim_i', type=int, default=1536, help='feature dimension of the image modality')
-    dataloader.add_argument('--dim_o', type=int, default=1, help='feature dimension of the object modality')
+    # Jangan lupa mengganti dimensi masukan juga
+    # default 2048
+    dataloader.add_argument('--dim_i', type=int, default=2048, help='feature dimension of the image modality')
+    dataloader.add_argument('--dim_o', type=int, default=1024, help='feature dimension of the object modality')
     dataloader.add_argument('--dim_t', type=int, default=1)
     dataloader.add_argument('--feats_a_name', nargs='+', type=str, default=[])
+
+    # Ingat untuk merubah nama fitur
+    # apabila mengganti feature extractor atau mengganti motion extractor
     dataloader.add_argument('--feats_m_name', nargs='+', type=str, default=['motion_resnext101_kinetics_duration16_overlap8.hdf5'])
     dataloader.add_argument('--feats_i_name', nargs='+', type=str, default=['image_resnet101_imagenet_fps_max60.hdf5'])
-    dataloader.add_argument('--feats_o_name', nargs='+', type=str, default=[])
+    dataloader.add_argument('--feats_o_name', nargs='+', type=str, default=['object_fasterrcnn_resnext_fps_28.hdf5']) ## HEADS UP
     dataloader.add_argument('--feats_t_name', nargs='+', type=str, default=[])
     # corpus information
     dataloader.add_argument('--info_corpus_name', type=str, default='info_corpus.pkl')

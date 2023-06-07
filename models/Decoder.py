@@ -4,7 +4,7 @@ import torch.nn as nn
 from .bert import BertEmbeddings, BertLayer
 from torch.nn import Parameter
 
-__all__ = ('BertDecoder', 'BertDecoderDisentangled')
+__all__ = ('BertDecoder', 'BertDecoderDisentangled') 
 
 def get_non_pad_mask(seq):
     assert seq.dim() == 2
@@ -72,11 +72,11 @@ class BertDecoder(nn.Module):
             config = dict2obj(config)
         self.embedding = BertEmbeddings(config, return_pos=True if config.pos_attention else False) if embedding is None else embedding
         self.layer = nn.ModuleList([BertLayer(config, is_decoder_layer=True) for _ in range(config.num_hidden_layers_decoder)])
-        self.pos_attention = config.pos_attention
-        self.enhance_input = config.enhance_input
-        self.watch = config.watch
+        self.pos_attention = config.pos_attention # default is false
+        self.enhance_input = config.enhance_input # default is 2
+        self.watch = config.watch # default 0
 
-        self.decoding_type = config.decoding_type
+        self.decoding_type = config.decoding_type # ARFormer / NARFormer
 
     def _init_embedding(self, weight, option={}, is_numpy=False):
         if is_numpy:
@@ -121,11 +121,11 @@ class BertDecoder(nn.Module):
             #print(slf_attn_mask[0], slf_attn_mask.shape)
         else:
             slf_attn_mask_subseq = get_subsequent_mask(tgt_seq, watch=self.watch)
-            slf_attn_mask = (slf_attn_mask_keypad + slf_attn_mask_subseq).gt(0)
+            slf_attn_mask = (slf_attn_mask_keypad + slf_attn_mask_subseq).gt(0) # menggabungkan mask padding dan mask training transformer
 
-        non_pad_mask = get_non_pad_mask(tgt_seq)
-        src_seq = torch.ones(enc_output.size(0), enc_output.size(1)).to(enc_output.device)
-        attend_to_enc_output_mask = get_attn_key_pad_mask(seq_k=src_seq, seq_q=tgt_seq)
+        non_pad_mask = get_non_pad_mask(tgt_seq) # made a matrix which element is not 0 if it is not a padding
+        src_seq = torch.ones(enc_output.size(0), enc_output.size(1)).to(enc_output.device) # diisi dengan nilai 1
+        attend_to_enc_output_mask = get_attn_key_pad_mask(seq_k=src_seq, seq_q=tgt_seq) # artinya atensi dapat melihat ke semua posisi
 
         additional_feats = None
         if decoding_type == 'NARFormer':
@@ -144,11 +144,14 @@ class BertDecoder(nn.Module):
         if self.pos_attention:
             hidden_states, position_embeddings = self.embedding(tgt_seq, category=category)
         else:
-            hidden_states = self.embedding(tgt_seq, additional_feats=additional_feats, category=category, tags=tags)
+            hidden_states = self.embedding(tgt_seq, 
+                                           additional_feats=additional_feats, # none
+                                           category=category, # kalo MSRVTT ada
+                                           tags=tags) # none
             position_embeddings = None
 
         res = []
-        for i, layer_module in enumerate(self.layer):
+        for i, layer_module in enumerate(self.layer): # ini operasi Multi-Head Attention
             if not i:
                 input_ = hidden_states
             else:

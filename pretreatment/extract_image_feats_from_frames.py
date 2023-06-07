@@ -30,6 +30,7 @@ def extract_feats(params, model, load_image_fn, C, H, W):
             # MSR-VTT 2017 has 13,000 videos, but we use MSR-VTT 2016 like previous works
             # So we only need to process video0 ~ video9999
             continue
+        
         if video_id in db.keys():
             continue
         

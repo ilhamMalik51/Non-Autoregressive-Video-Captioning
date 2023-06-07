@@ -43,20 +43,21 @@ class VideoDataset(Dataset):
         assert mode in ['train', 'validate', 'test']
         self.opt = opt
         self.mode = mode
+
         if self.mode != 'train':
             self.random_type = 'equally_sampling'
             self.n_caps_per_video = 1 if not self.opt.get('parallel_mlm', False) else 0
         else:
-            self.random_type = opt.get('random_type', 'segment_random')
+            self.random_type = opt.get('random_type', 'segment_random') # if default, segment random is choosen
             self.n_caps_per_video = opt.get('n_caps_per_video', 0)
             assert self.random_type in ['segment_random', 'all_random', 'equally_sampling']
             assert self.n_caps_per_video >= 0
 
         data = pickle.load(open(opt['info_corpus'], 'rb'))
-        self.captions = data['captions']
+        self.captions = data['captions'] # key('video' + ix)-value([[ TOKENIZED_CAPTIONS ]])
         self.pos_tags = data['pos_tags']
 
-        info = data['info']    
+        info = data['info']
         self.itow = info['itow']
         self.itoc = info.get('itoc', None)        
         self.itop = info.get('itop', None)
@@ -67,8 +68,8 @@ class VideoDataset(Dataset):
         self.specific = specific
         self.random = np.random.RandomState(opt['seed'])
 
-        self.databases = self._make_databases()
-        self.infoset = self._make_infoset()
+        self.databases = self._make_databases() # ini memegang features
+        self.infoset = self._make_infoset() # return a list consisting of dict object
         if print_info:
             self.print_info()
     
@@ -117,7 +118,7 @@ class VideoDataset(Dataset):
 
         label = self.captions[vid][cap_id]
         tagging = self.pos_tags[vid][cap_id]
-        data.update(self._prepare_input_ids(cap_id, label, tagging))
+        data.update(self._prepare_input_ids(cap_id, label, tagging)) # data["tokens"], data["labels"]
 
         category = self.itoc[int(vid[5:])] if self.itoc is not None else 0
         data['category'] = torch.LongTensor([category])
@@ -140,8 +141,9 @@ class VideoDataset(Dataset):
             key_name = "feats_%s" % char
             database = _load_database(self.opt[key_name])
             assert len(database) > 0
-            databases.append([key_name, database, self.opt["dim_%s" % char]])
-        return databases
+            databases.append([key_name, database, self.opt["dim_%s" % char]]) # [ 'feats_i', PATH_HDF5_FILE, 2048 (dim_i) ]
+        
+        return databases # list of lists
 
     def _make_infoset(self):
         print('Preparing %s set of %s' % (self.mode, self.opt['dataset']))
@@ -155,7 +157,7 @@ class VideoDataset(Dataset):
             # we evaluate all examples regardless of categories
             ix_set = [int(item) for item in self.splits[self.mode]]
 
-        for ix in ix_set:
+        for ix in ix_set: # untuk setiap video
             vid = 'video%d' % ix
             category = self.itoc[ix] if self.itoc is not None else 0
             captions = self.captions[vid]
@@ -169,52 +171,53 @@ class VideoDataset(Dataset):
             else:
                 length_target = self.length_info[vid]
                 length_target = length_target[:self.opt['max_len']]
-                if len(length_target) < self.opt['max_len']:
-                    length_target += [0] * (self.opt['max_len'] - len(length_target))
 
-                length_target = np.array(length_target) / sum(length_target)
+                if len(length_target) < self.opt['max_len']:
+                    length_target += [0] * (self.opt['max_len'] - len(length_target)) # melakukan padding
+
+                length_target = np.array(length_target) / sum(length_target) # distribution relative target length relative
             
             # decide which captions are used to calculate training/evaluation loss
             if self.n_caps_per_video == 0:
-                cap_id_set = [i for i in range(len(captions))]
+                cap_id_set = [i for i in range(len(captions))] # himpunan caption-caption
             elif self.n_caps_per_video == 1 and self.mode != 'train':
                 cap_id_set = [0]
             else:
                 n_caps_per_video = min(len(captions), self.n_caps_per_video)
                 cap_id_set = self.random.choice(
-                    [i for i in range(len(captions))], 
+                    [i for i in range(len(captions))], # list semua caption
                     n_caps_per_video,
                     replace=False
                 )
             
-            for cap_id in cap_id_set:
+            for cap_id in cap_id_set: # per himpunan caption dari video terkait
                 item = {
                     'vid': vid,
-                    'labels': captions[cap_id],
-                    'pos_tags': pos_tags[cap_id],
-                    'category': category,
+                    'labels': captions[cap_id], # target caption
+                    'pos_tags': pos_tags[cap_id], # pos-ed caption
+                    'category': category, # category video
                     'length_target': length_target,
                     'cap_id': cap_id,
                     }
                 infoset.append(item)
 
-        return infoset
+        return infoset # list of dicts object
 
-    def __getitem__(self, ix):
+    def __getitem__(self, ix): # memungkinkan untuk mengambil index objek
         data = {}
         vid = self.infoset[ix]['vid']
         cap_id = self.infoset[ix]['cap_id']
         labels = self.infoset[ix]['labels']
         taggings = self.infoset[ix]['pos_tags']
 
-        data.update(self._prepare_video_features(vid))
-        data.update(self._prepare_input_ids(cap_id, labels, taggings))
+        data.update(self._prepare_video_features(vid)) # data["video_ids"]
+        data.update(self._prepare_input_ids(cap_id, labels, taggings)) # data["tokens"], data["labels"], data["taggings"]
         
         # some auxiliary information
         data['length_target'] = torch.FloatTensor(self.infoset[ix]['length_target'])        
         data['category'] = torch.LongTensor([self.infoset[ix]['category']])
 
-        return data
+        return data # bentukannya dictionary
 
     def __len__(self):
         return len(self.infoset)
@@ -223,7 +226,7 @@ class VideoDataset(Dataset):
         _dict = {'video_ids': vid}
         
         frame_ids = get_frame_ids(
-            self.opt.get('n_total_frames', 60),
+            self.opt.get('n_total_frames', 60), # CHECK PLEASE
             self.opt['n_frames'], 
             self.random_type
         ) if self.opt['load_feats_type'] == 0 else None
@@ -238,7 +241,7 @@ class VideoDataset(Dataset):
 
         return _dict
 
-    def _prepare_input_ids(self, cap_id, labels, taggings):
+    def _prepare_input_ids(self, cap_id, labels, taggings): # cap_id himpunan id caption
         _dict = {'caption_ids': cap_id}
 
         results = self._make_source_target(labels, taggings)
@@ -249,11 +252,11 @@ class VideoDataset(Dataset):
         tokens_1 = results.get('dec_source_1', None)
         labels_1 = results.get('dec_target_1', None)
 
-        _dict['tokens'] = torch.LongTensor(tokens)
-        _dict['labels'] = torch.LongTensor(labels)
+        _dict['tokens'] = torch.LongTensor(tokens) # ini list labels yang udah dipadding
+        _dict['labels'] = torch.LongTensor(labels) # labels ini list [ TOKENIZED_CAPTION ]
 
         if taggings is not None:
-            _dict['taggings'] = torch.LongTensor(taggings)
+            _dict['taggings'] = torch.LongTensor(taggings) # ini list pos_tags
         if tokens_1 is not None:
             _dict['tokens_1'] = torch.LongTensor(tokens_1)
             _dict['labels_1'] = torch.LongTensor(labels_1)
@@ -264,29 +267,29 @@ class VideoDataset(Dataset):
         frame_ids = kwargs.get('frame_ids', None)
         padding = kwargs.get('padding', True)
 
-        databases, dim = data
+        databases, dim = data # data[1] = hdfs, data[2] = feature_dim
         max_seq_len = databases[0].get('max_len', self.opt['n_frames'])
         if max_seq_len != self.opt['n_frames']:
             max_seq_len = int(np.asarray(max_seq_len))
 
         feats = []
         pre_len = None
-        for database in databases:
+        for database in databases: # for untuk 3 features
             if vid not in database.keys():
                 if padding:
                     return np.zeros((max_seq_len, dim))
                 else:
                     return np.zeros(dim)
             else:
-                data = np.asarray(database[vid])
-                if len(data.shape) == 1 and padding:
+                data = np.asarray(database[vid]) # get hdf5 file using keys
+                if len(data.shape) == 1 and padding: # ke skip karena shape [ FRAME_LEN, DIM_FEATURES ]
                     if pre_len is not None:
                         data = data[np.newaxis, :].repeat(pre_len, axis=0)
                     else:
-                        data = data[np.newaxis, :].repeat(self.opt.get('n_total_frames', 60), axis=0)
+                        data = data[np.newaxis, :].repeat(self.opt.get('n_total_frames', 60), axis=0) # CHECK
                 else:
                     pre_len = data.shape[0]
-            feats.append(data)
+            feats.append(data) # tambah data per jenis
 
         if len(feats[0].shape) == 1:
             feats = np.concatenate(feats, axis=0)

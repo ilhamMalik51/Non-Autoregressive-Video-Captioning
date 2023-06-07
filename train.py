@@ -13,16 +13,18 @@ from config import Constants
 
 
 def get_dir(opt, key, mid_path=''):
-    if not opt.get(key, ''):
+    if not opt.get(key, ''): ## nge-get associated file
         return ''
+    
     res = []
     if isinstance(opt[key], list):
         if not opt[key][0]:
             return ''
-        for i in range(len(opt[key])):
+        for i in range(len(opt[key])): ## opt['dataset'] = MSRVTT
             res.append(os.path.join(Constants.base_data_path, opt['dataset'], mid_path, opt[key][i]))
     else:
         res = os.path.join(Constants.base_data_path, opt['dataset'], mid_path, opt[key])
+        
     return res
 
 
@@ -66,7 +68,7 @@ def main(opt):
     # get full paths to load features / corpora
     for key in ['feats_a_name', 'feats_m_name', 'feats_i_name', 'feats_o_name', 'feats_t_name'] \
         + ['reference_name', 'info_corpus_name']:
-        opt[key[:-5]] = get_dir(opt, key, 'feats' if 'feats' in key else '')
+        opt[key[:-5]] = get_dir(opt, key, 'feats' if 'feats' in key else '') ## menambah key baru pada dictionary opt
         opt.pop(key)
 
     # the assignment of 'vocab_size' should be done before defining the model
@@ -78,7 +80,7 @@ def main(opt):
         json.dump(opt, f)
     print('save opt details to %s' % (opt_json))
     
-    # get the model
+    # get the model with specified config
     model = get_model(opt)
     print_information(opt, model)
     device = torch.device('cuda' if not opt['no_cuda'] else 'cpu')

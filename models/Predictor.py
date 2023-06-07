@@ -8,7 +8,6 @@ __all__ = (
     'Auxiliary_Task_Predictor'
 )
 
-
 class Predictor_length(nn.Module):
     def __init__(self, opt, key_name):
         super(Predictor_length, self).__init__()

@@ -34,7 +34,10 @@ def get_encoder(opt, input_size):
 def get_joint_representation_learner(opt):
     if opt.get('no_joint_representation_learner', False):
         return None
-    feats_size = [opt['dim_hidden']] * len(opt['modality'])
+    
+    # this return list with len(list) = 2 if there is no o
+    # and will return 2
+    feats_size = [opt['dim_hidden']] * (len(opt['modality']))
     return Joint_Representaion_Learner(feats_size, opt)
 
 
@@ -42,13 +45,13 @@ def get_auxiliary_task_predictor(opt):
     supported_auxiliary_tasks = [item[10:] for item in dir(Predictor) if 'Predictor_' in item]
 
     layers = []
-    for crit_name in opt['crit']:
+    for crit_name in opt['crit']: # opt['crit'] will have two value ['lang', 'length'] for NACF
         if crit_name in supported_auxiliary_tasks:
-            predictor_name = 'Predictor_%s'%crit_name
+            predictor_name = 'Predictor_%s' % crit_name # add _Length again
             _func = getattr(Predictor, predictor_name, None)
             if _func is None:
                 raise ValueError('We can not find {} in models/Predictor.py'.format(predictor_name))
-            layers.append(_func(opt, key_name=Constants.mapping[crit_name][0]))
+            layers.append(_func(opt, key_name=Constants.mapping[crit_name][0])) # the key is "pred_length"
     return None if not len(layers) else Predictor.Auxiliary_Task_Predictor(layers)
 
 
@@ -58,7 +61,7 @@ def get_decoder(opt):
         supported_modules=Decoder.__all__,
         key_name='Decoder'
     )
-    return getattr(Decoder, opt['decoder'], None)(opt)
+    return getattr(Decoder, opt['decoder'], None)(opt) # opt = config
 
 
 def get_model(opt):
@@ -70,25 +73,32 @@ def get_model(opt):
         'a': opt['dim_a'],
         'o': opt['dim_o'],
     }
+
     for char in modality:
         assert char in mapping.keys()
         input_size.append(mapping[char])
 
-    preEncoder, input_size = get_preEncoder(opt, input_size)
+    
+    preEncoder, input_size = get_preEncoder(opt, input_size)  # auto None preEncoder
     encoder = get_encoder(opt, input_size)
     joint_representation_learner = get_joint_representation_learner(opt)
-    have_auxiliary_tasks = sum([(1 if item not in ['lang'] else 0) for item in opt['crit']])
-    auxiliary_task_predictor = get_auxiliary_task_predictor(opt)
-    decoder = get_decoder(opt)
-    tgt_word_prj = nn.Linear(opt["dim_hidden"], opt["vocab_size"], bias=False)
 
+    have_auxiliary_tasks = sum([(1 if item not in ['lang'] else 0) for item in opt['crit']])
+
+    auxiliary_task_predictor = get_auxiliary_task_predictor(opt)  ## Ouput None klo AB klo NACF jadi NARFormer
+
+    decoder = get_decoder(opt) # tinggal ini yang belom
+    tgt_word_prj = nn.Linear(opt["dim_hidden"], opt["vocab_size"], bias=False) ## output projection
+
+    # instantiation
     model = Seq2Seq(
         opt=opt,
-        preEncoder=preEncoder,
+        preEncoder=preEncoder, #None
         encoder=encoder,
         joint_representation_learner=joint_representation_learner,
-        auxiliary_task_predictor=auxiliary_task_predictor,
+        auxiliary_task_predictor=auxiliary_task_predictor, #None
         decoder=decoder,
         tgt_word_prj=tgt_word_prj,
         )
+    
     return model
