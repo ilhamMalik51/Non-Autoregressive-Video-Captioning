@@ -5,7 +5,7 @@ import os
 def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataset', type=str, default='MSRVTT', help='MSRVTT | Youtube2Text')
-    parser.add_argument('-m', '--modality', type=str, default='mi')
+    parser.add_argument('-m', '--modality', type=str, default='mio')
     parser.add_argument('-df', '--default', default=False, action='store_true') # if specified stored as true
     parser.add_argument('--scope', type=str, default='')
     parser.add_argument('-field', '--field', nargs='+', type=str, default=['seed'])
