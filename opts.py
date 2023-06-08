@@ -140,7 +140,7 @@ def parse_opt():
     # apabila mengganti feature extractor atau mengganti motion extractor
     dataloader.add_argument('--feats_m_name', nargs='+', type=str, default=['motion_resnext101_kinetics_duration16_overlap8.hdf5'])
     dataloader.add_argument('--feats_i_name', nargs='+', type=str, default=['image_resnet101_imagenet_fps_max60.hdf5'])
-    dataloader.add_argument('--feats_o_name', nargs='+', type=str, default=['object_fasterrcnn_resnext_fps_28.hdf5']) ## HEADS UP
+    dataloader.add_argument('--feats_o_name', nargs='+', type=str, default=['MSRVTT_OBJECT_FASTERRCNN_RESNEXT_28.hdf5']) ## HEADS UP
     dataloader.add_argument('--feats_t_name', nargs='+', type=str, default=[])
     # corpus information
     dataloader.add_argument('--info_corpus_name', type=str, default='info_corpus.pkl')
