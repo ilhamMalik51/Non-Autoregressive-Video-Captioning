@@ -35,7 +35,7 @@ class Auxiliary_Task_Predictor(nn.Module):
         super(Auxiliary_Task_Predictor, self).__init__()
         self.layers = nn.ModuleList(layers)
 
-    def forward(self, enc_output, **kwargs):
+    def forward(self, enc_output, **kwargs): 
         results = {}
         for layer in self.layers:
             results.update(layer(enc_output=enc_output, **kwargs))

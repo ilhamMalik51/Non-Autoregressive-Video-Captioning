@@ -60,7 +60,7 @@ class Seq2Seq(nn.Module):
 
         results['enc_output'] = enc_output # ini tuh udah tensor yang disimpan di dict
         results['enc_hidden'] = enc_hidden # ini juga udah tensor
-        results['enc_obj_output'] = enc_obj_output          
+        results['enc_obj_output'] = enc_obj_output         
         return results
 
     def align_object_variable(self, r_feats, r_hat):
@@ -91,7 +91,7 @@ class Seq2Seq(nn.Module):
         return torch.cat([r_hat[:, 0].unsqueeze(1), aligned_frames], dim=1)
     
     def prepare_inputs_for_decoder(self, encoder_outputs, category):
-        input_keys_for_decoder = ['enc_output']
+        input_keys_for_decoder = ['enc_output', 'enc_obj_output']
         if self.opt['decoding_type'] == 'LSTM': # this is skipped
             input_keys_for_decoder.append('enc_hidden')
 

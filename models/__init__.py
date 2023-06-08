@@ -44,7 +44,7 @@ def get_joint_representation_learner(opt):
 def get_auxiliary_task_predictor(opt):
     supported_auxiliary_tasks = [item[10:] for item in dir(Predictor) if 'Predictor_' in item]
 
-    layers = []
+    layers = [] 
     for crit_name in opt['crit']: # opt['crit'] will have two value ['lang', 'length'] for NACF
         if crit_name in supported_auxiliary_tasks:
             predictor_name = 'Predictor_%s' % crit_name # add _Length again
