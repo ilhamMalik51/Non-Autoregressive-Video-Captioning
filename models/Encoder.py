@@ -77,7 +77,7 @@ class ORG(nn.Module):
         a_hat = self.adjacency_dropout(a_hat)  ## Applying Dropout        
         r_hat = torch.matmul(a_hat, self.w_r(object_variable))  ## R_hat = A_hat . R . Wr
         
-        return r_feat, r_hat
+        return self.adjacency_dropout(r_feat), self.adjacency_dropout(r_hat)
 
 class MultipleStreams(nn.Module):
     def __init__(self, opt, module_func, org_func, is_rnn=False):
