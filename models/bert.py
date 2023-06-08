@@ -251,19 +251,22 @@ class BertLayer(nn.Module):
         self.attention = BertAttention(config, with_residual=False if is_parallel_mlm else True)
         self.pos_attention = None if not (config.pos_attention and is_decoder_layer) \
             else BertAttention(config, pos=True)
+        
         self.attend_to_enc_output = None if not is_decoder_layer \
             else BertAttention(config, attend_to_enc_output=True)
+        
         self.attend_to_enc_obj_output = None if not is_decoder_layer \
             else BertAttention(config, attend_to_enc_output=True)
+        
         self.intermediate = BertIntermediate(config)
         self.output = BertOutput(config)
 
     def forward(self, hidden_states, non_pad_mask=None, attention_mask=None, 
-        enc_output=None, attend_to_enc_output_mask=None, enc_obj_output=None,
+        enc_output=None, attend_to_enc_output_mask=None, enc_obj_output=None, attend_to_enc_obj_output_mask=None,
         attr_probs=None, attend_to_attributes_mask=None, video2attr_raw_scores=None, word_embeddings=None,
         output_attentions=False, head_mask=None, position_embeddings=None, **kwargs):
         
-        all_attentions = ()
+        all_attentions = () # menyimpan bobot
         # output ini memiliki shape [BATCH_SIZE, SEQ_LENGTH, FEAT_DIM]
         attention_outputs = self.attention(hidden_states, hidden_states, hidden_states, attention_mask, head_mask, output_attentions=output_attentions)
         attention_output = attention_outputs[0] # karena outputnya tuple
@@ -283,13 +286,26 @@ class BertLayer(nn.Module):
         if self.attend_to_enc_output is not None: # ini Inter-Attention Encoder-Decoder
             assert attend_to_enc_output_mask is not None
             assert enc_output is not None
+            assert enc_obj_output is not None
 
             attention_outputs = self.attend_to_enc_output( 
                 attention_output, enc_output, enc_output, 
                 attend_to_enc_output_mask, head_mask, 
                 output_attentions=output_attentions
             )
-            # output ini memiliki shape [BATCH_SIZE, SEQ_LENGTH, FEAT_DIM]
+
+            # Operasi ini perlu diulang untuk meneruskan
+            # data flow
+            attention_output = attention_outputs[0]
+            all_attentions += attention_outputs[1:]
+            
+            # HEADS UP
+            # Ini bagien Inter-Attention untuk Object Feats
+            attention_outputs = self.attend_to_enc_obj_output( 
+                attention_output, enc_obj_output, enc_obj_output, 
+                attend_to_enc_obj_output_mask, head_mask, 
+                output_attentions=output_attentions
+            )
 
             attention_output = attention_outputs[0] # karena outputnya tuple
             all_attentions += attention_outputs[1:]

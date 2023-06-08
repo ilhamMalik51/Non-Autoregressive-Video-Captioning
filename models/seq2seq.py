@@ -87,6 +87,7 @@ class Seq2Seq(nn.Module):
                                       dim=2, 
                                       index=similarity_score.topk(1, -1)[1].\
                                       expand(-1, -1, -1, r_hat.size(-1)))
+        
         return torch.cat([r_hat[:, 0].unsqueeze(1), aligned_frames], dim=1)
     
     def prepare_inputs_for_decoder(self, encoder_outputs, category):
@@ -107,8 +108,9 @@ class Seq2Seq(nn.Module):
         
         if isinstance(inputs_for_decoder['enc_obj_output'], tuple):
             assert len(inputs_for_decoder['enc_obj_output']) == 2 # memeriksa objek fitur
+            b_size, f_len, n_obj, _ = inputs_for_decoder['enc_obj_output'][1].size()
             inputs_for_decoder['enc_obj_output'] = self.align_object_variable(inputs_for_decoder['enc_obj_output'][0],
-                                                                              inputs_for_decoder['enc_obj_output'][1])
+                                                                              inputs_for_decoder['enc_obj_output'][1]).view(b_size, f_len * n_obj, -1)
 
         return inputs_for_decoder
 

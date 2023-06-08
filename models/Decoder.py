@@ -102,8 +102,9 @@ class BertDecoder(nn.Module):
             enc_output = enc_output[0]
 
         if isinstance(enc_obj_output, tuple): # menambah fitur ORG
-            assert len(enc_output) == 2
+            assert len(enc_obj_output) == 2
             enc_obj_output = enc_obj_output[1]
+
         all_attentions = ()
 
         slf_attn_mask_keypad = get_attn_key_pad_mask(seq_k=tgt_seq, seq_q=tgt_seq)
@@ -130,6 +131,9 @@ class BertDecoder(nn.Module):
         non_pad_mask = get_non_pad_mask(tgt_seq) # made a matrix which element is not 0 if it is not a padding
         src_seq = torch.ones(enc_output.size(0), enc_output.size(1)).to(enc_output.device) # diisi dengan nilai 1
         attend_to_enc_output_mask = get_attn_key_pad_mask(seq_k=src_seq, seq_q=tgt_seq) # artinya atensi dapat melihat ke semua posisi
+
+        src_seq_obj = torch.ones(enc_obj_output.size(0), enc_obj_output.size(1)).to(enc_obj_output.device)
+        attend_to_enc_obj_output_mask = get_attn_key_pad_mask(seq_k=src_seq_obj, seq_q=tgt_seq)
 
         additional_feats = None
         if decoding_type == 'NARFormer':
@@ -165,8 +169,10 @@ class BertDecoder(nn.Module):
                 input_, 
                 non_pad_mask=non_pad_mask, 
                 attention_mask=slf_attn_mask,
-                enc_output=enc_output, 
-                attend_to_enc_output_mask=attend_to_enc_output_mask, 
+                enc_output=enc_output,
+                enc_obj_output=enc_obj_output, 
+                attend_to_enc_output_mask=attend_to_enc_output_mask,
+                attend_to_enc_obj_output_mask=attend_to_enc_obj_output_mask, 
                 position_embeddings=position_embeddings, 
                 word_embeddings=self.get_word_embeddings(),
                 **kwargs
