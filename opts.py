@@ -133,7 +133,7 @@ def parse_opt():
     dataloader.add_argument('--dim_t', type=int, default=1)
     dataloader.add_argument('--feats_a_name', nargs='+', type=str, default=[])
     dataloader.add_argument('--feats_m_name', nargs='+', type=str, default=['motion_resnext101_kinetics_duration16_overlap8.hdf5'])
-    dataloader.add_argument('--feats_i_name', nargs='+', type=str, default=['image_resnet101_imagenet_fps_max60.hdf5'])
+    dataloader.add_argument('--feats_i_name', nargs='+', type=str, default=['image_inceptionresnetv2_imagenet_fps_max28.hdf5'])
     dataloader.add_argument('--feats_o_name', nargs='+', type=str, default=[])
     dataloader.add_argument('--feats_t_name', nargs='+', type=str, default=[])
     # corpus information
