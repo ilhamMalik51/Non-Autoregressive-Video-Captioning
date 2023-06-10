@@ -287,10 +287,12 @@ class BertLayer(nn.Module):
             assert attend_to_enc_output_mask is not None
             assert enc_output is not None
             assert enc_obj_output is not None
-
-            attention_outputs = self.attend_to_enc_output( 
-                attention_output, enc_output, enc_output, 
-                attend_to_enc_output_mask, head_mask, 
+            
+            # HEADS UP
+            # Ini bagien Inter-Attention untuk Object Feats
+            attention_outputs = self.attend_to_enc_obj_output( 
+                attention_output, enc_obj_output, enc_obj_output, 
+                attend_to_enc_obj_output_mask, head_mask, 
                 output_attentions=output_attentions
             )
 
@@ -298,12 +300,10 @@ class BertLayer(nn.Module):
             # data flow
             attention_output = attention_outputs[0]
             all_attentions += attention_outputs[1:]
-            
-            # HEADS UP
-            # Ini bagien Inter-Attention untuk Object Feats
-            attention_outputs = self.attend_to_enc_obj_output( 
-                attention_output, enc_obj_output, enc_obj_output, 
-                attend_to_enc_obj_output_mask, head_mask, 
+
+            attention_outputs = self.attend_to_enc_output( 
+                attention_output, enc_output, enc_output, 
+                attend_to_enc_output_mask, head_mask, 
                 output_attentions=output_attentions
             )
 
