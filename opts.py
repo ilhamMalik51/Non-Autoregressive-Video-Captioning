@@ -127,7 +127,7 @@ def parse_opt():
     # modality information
     dataloader.add_argument('--dim_a', type=int, default=1, help='feature dimension of the audio modality')
     dataloader.add_argument('--dim_m', type=int, default=2048, help='feature dimension of the motion modality')
-    dataloader.add_argument('--dim_i', type=int, default=1536, help='feature dimension of the image modality')
+    dataloader.add_argument('--dim_i', type=int, default=2048, help='feature dimension of the image modality')
     dataloader.add_argument('--dim_o', type=int, default=1024, help='feature dimension of the object modality') # CEKKKK
     dataloader.add_argument('--dim_t', type=int, default=1)
     dataloader.add_argument('--feats_a_name', nargs='+', type=str, default=[])
