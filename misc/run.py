@@ -126,7 +126,7 @@ def run_eval(
     
     collect_ar_flag = (opt['decoding_type'] == 'ARFormer' and collect_best_candidate_iterative_results)
 
-    for data in tqdm(loader, ncols=150, leave=True):
+    for data in tqdm(loader, ncols=150, leave=True, position=0):
         with torch.no_grad():
             encoder_outputs, category, labels = get_forward_results(opt, model, data, device=device, only_data=True, vocab=vocab)
             if crit is not None:
@@ -252,7 +252,7 @@ def run_train(opt, model, crit, optimizer, loader, device, logger=None, epoch=-1
     crit.reset_loss_recorder()
     vocab = loader.dataset.get_vocab()
 
-    for data in tqdm(loader, ncols=150, leave=True):
+    for data in tqdm(loader, ncols=150, leave=True, position=0):
         optimizer.zero_grad()
         results = get_forward_results(opt, model, data, device=device, only_data=False, vocab=vocab, **kwargs)
         loss = crit.get_loss(results, epoch=epoch)
