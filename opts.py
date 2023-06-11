@@ -127,7 +127,7 @@ def parse_opt():
     # modality information
     dataloader.add_argument('--dim_a', type=int, default=1, help='feature dimension of the audio modality')
     dataloader.add_argument('--dim_m', type=int, default=2048, help='feature dimension of the motion modality')
-    dataloader.add_argument('--dim_i', type=int, default=1536, help='feature dimension of the image modality')
+    dataloader.add_argument('--dim_i', type=int, default=2048, help='feature dimension of the image modality')
     dataloader.add_argument('--dim_o', type=int, default=1024, help='feature dimension of the object modality') # CEKKKK
     dataloader.add_argument('--dim_t', type=int, default=1)
     dataloader.add_argument('--feats_a_name', nargs='+', type=str, default=[])
@@ -135,8 +135,8 @@ def parse_opt():
     # Ingat untuk merubah nama fitur
     # apabila mengganti feature extractor atau mengganti motion extractor
     dataloader.add_argument('--feats_m_name', nargs='+', type=str, default=['motion_resnext101_kinetics_duration16_overlap8.hdf5'])
-    dataloader.add_argument('--feats_i_name', nargs='+', type=str, default=['image_inceptionresnetv2_imagenet_fps_max28.hdf5'])
-    dataloader.add_argument('--feats_o_name', nargs='+', type=str, default=['MSRVTT_OBJECT_FASTERRCNN_RESNEXT_28.hdf5']) ## HEADS UP
+    dataloader.add_argument('--feats_i_name', nargs='+', type=str, default=['image_resnet101_imagenet_fps_max60.hdf5'])
+    dataloader.add_argument('--feats_o_name', nargs='+', type=str, default=['object_fasterrcnn_imagenet_fps_max20.hdf5']) ## HEADS UP
     dataloader.add_argument('--feats_t_name', nargs='+', type=str, default=[])
     # corpus information
     dataloader.add_argument('--info_corpus_name', type=str, default='info_corpus.pkl')
