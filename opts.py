@@ -128,7 +128,7 @@ def parse_opt():
     dataloader.add_argument('--dim_m', type=int, default=2048, help='feature dimension of the motion modality')
     
     # CHECK
-    dataloader.add_argument('--dim_i', type=int, default=1536, help='feature dimension of the image modality')
+    dataloader.add_argument('--dim_i', type=int, default=2048, help='feature dimension of the image modality')
     dataloader.add_argument('--dim_o', type=int, default=1, help='feature dimension of the object modality')
     dataloader.add_argument('--dim_t', type=int, default=1)
     dataloader.add_argument('--feats_a_name', nargs='+', type=str, default=[])
