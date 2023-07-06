@@ -200,7 +200,7 @@ def main():
                 
 
 if __name__ == "__main__":
-    main()
+    main() 
 
 '''
 python translate.py -df -method ARB -analyze

@@ -40,18 +40,18 @@ class ORG(nn.Module):
                         the last fully-connected layer of the backbone
                         of Faster R-CNN
         '''
-        
-        self.dropout = nn.Dropout(0.3)# dropout rate 0.3
-        self.adjacency_dropout = nn.Dropout(0.5)# dropout rate 0.5
+        self.adjacency_dropout = nn.Dropout(0.5) # dropout rate 0.5
 
         self.object_projection = nn.Linear(in_features=input_dim,
                                            out_features=output_dim)
+        self.highway_layer = HighWay(output_dim, True) 
+
         self.sigma_r = nn.Linear(in_features=input_dim,
                                  out_features=output_dim)
         self.psi_r = nn.Linear(in_features=input_dim,
                                out_features=output_dim)
-        self.w_r = nn.Linear(in_features=input_dim, 
-                             out_features=output_dim, 
+        self.w_r = nn.Linear(in_features=output_dim, 
+                             out_features=output_dim,
                              bias=False)
     
     def forward(self, object_variable): # only one inputs
@@ -64,20 +64,20 @@ class ORG(nn.Module):
                  between objects 
                  (batch_size, num_frames, num_objects, feature_dim)
         '''
-        object_variable = self.dropout(object_variable)  ## Projected Object Features to 512-D
-        r_feat = self.object_projection(object_variable)  
+        r_feat = self.object_projection(object_variable)
+        r_feat = self.highway_layer(r_feat)
+        r_feat = self.adjacency_dropout(r_feat)
+  
         sigma_r = self.sigma_r(object_variable)   ## Sigma(R) = R . Wi + bi
         psi_r = self.psi_r(object_variable)   ## Psi(R) = R . Wj + bj
 
         a_coeff = torch.bmm(sigma_r.view(-1, r_feat.size(-2), r_feat.size(-1)),  ## A = Simga(R) . Psi(R).T
                             psi_r.contiguous().view(-1, r_feat.size(-2), r_feat.size(-1))\
                             .transpose(1, 2)).view(r_feat.size(0), r_feat.size(1), r_feat.size(-2), r_feat.size(-2))
-        a_hat = F.softmax(a_coeff, dim=-1)  ## A_hat = Softmax(A)
+        a_hat = F.softmax(a_coeff, dim=-1)  ## A_hat = Softmax(A)        
+        r_hat = torch.matmul(a_hat, self.w_r(r_feat))  ## R_hat = A_hat . R . Wr
 
-        a_hat = self.adjacency_dropout(a_hat)  ## Applying Dropout        
-        r_hat = torch.matmul(a_hat, self.w_r(object_variable))  ## R_hat = A_hat . R . Wr
-        
-        return self.adjacency_dropout(r_feat), self.adjacency_dropout(r_hat)
+        return r_feat, self.adjacency_dropout(r_hat)
 
 class MultipleStreams(nn.Module):
     def __init__(self, opt, module_func, org_func, is_rnn=False):
